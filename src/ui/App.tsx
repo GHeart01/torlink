@@ -48,7 +48,9 @@ import { FolderPrompt } from "./components/FolderPrompt";
 import { TrackersPrompt } from "./components/TrackersPrompt";
 import { footerHints } from "./keymap";
 import { COLOR, ICON } from "./theme";
-import { MouseProvider, useMouse } from "./mouse";
+import { Clickable, MouseProvider, useMouse } from "./mouse";
+import { useWarp } from "./hooks/useWarp";
+import type { WarpState } from "../util/warp";
 import { VERSION } from "../version";
 import { fetchLatestVersion, isNewer } from "../update/version";
 
@@ -72,7 +74,27 @@ interface AppProps {
   initialTorrent?: string;
   inbox?: Inbox | null;
   playlist?: boolean;
+  // What startup read from Cloudflare WARP before the first socket; null when
+  // WARP is not being used (not installed, --no-warp, or --interface given).
+  warp?: WarpState | null;
   onQuit?: () => void;
+}
+
+// The one-line VPN readout at the top right. Quiet while up; when down it
+// says what that costs, and a click asks the VPN to come back.
+function VpnBadge({ vpn }: { vpn: NonNullable<Store["vpn"]> }) {
+  return (
+    <Clickable onClick={vpn.up ? undefined : vpn.connect} flexShrink={0}>
+      {vpn.up ? (
+        <Text dimColor>
+          <Text color={COLOR.good}>{`${ICON.done} `}</Text>
+          {`${vpn.name} on`}
+        </Text>
+      ) : (
+        <Text color={COLOR.warn}>{`${ICON.warn} ${vpn.name} ${vpn.detail} ${ICON.dot} paused`}</Text>
+      )}
+    </Clickable>
+  );
 }
 
 export function App(props: AppProps = {}) {
@@ -83,7 +105,7 @@ export function App(props: AppProps = {}) {
   );
 }
 
-function AppBody({ initialMagnet, initialTorrent, inbox, playlist, onQuit }: AppProps) {
+function AppBody({ initialMagnet, initialTorrent, inbox, playlist, warp, onQuit }: AppProps) {
   const { press } = useMouse();
   const { exit } = useApp();
   const { isRawModeSupported } = useStdin();
@@ -140,6 +162,7 @@ function AppBody({ initialMagnet, initialTorrent, inbox, playlist, onQuit }: App
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [recovered, setRecovered] = useState(false);
   const booting = useRef(false);
+  const vpn = useWarp(queue, warp ?? null, setNotice);
 
   useEffect(() => {
     if (booting.current) return;
@@ -579,6 +602,7 @@ function AppBody({ initialMagnet, initialTorrent, inbox, playlist, onQuit }: App
       openDownloadFolder,
       exportTorrent,
       fetchAndExportTorrent,
+      vpn,
       notice,
       setNotice,
       quitAll,
@@ -610,6 +634,7 @@ function AppBody({ initialMagnet, initialTorrent, inbox, playlist, onQuit }: App
     openDownloadFolder,
     exportTorrent,
     fetchAndExportTorrent,
+    vpn,
     notice,
     listRows,
     compact,
@@ -706,7 +731,16 @@ function AppBody({ initialMagnet, initialTorrent, inbox, playlist, onQuit }: App
           <Box flexShrink={0}>
             <Logo />
           </Box>
-          {notice ? (
+          {vpn ? (
+            <Box flexDirection="column" alignItems="flex-end" flexShrink={1} minWidth={0} marginLeft={2}>
+              <VpnBadge vpn={vpn} />
+              {notice ? (
+                <Text color={COLOR.good} wrap="truncate-end">
+                  {notice}
+                </Text>
+              ) : null}
+            </Box>
+          ) : notice ? (
             <Box flexShrink={1} minWidth={0} marginLeft={2}>
               <Text color={COLOR.good} wrap="truncate-end">
                 {notice}

@@ -152,9 +152,12 @@ export function Results() {
     setResultFocus,
     contentWidth,
     listRows,
+    vpn,
   } = useStore();
 
-  const search = useConcurrentSearch(query);
+  // Held to a VPN that is down: look nothing up until it is back.
+  const vpnDown = vpn !== null && !vpn.up;
+  const search = useConcurrentSearch(query, !vpnDown);
 
   const [sort, setSort] = useState<Sort>("none");
   const [hideDead, setHideDead] = useState(false);
@@ -388,6 +391,13 @@ export function Results() {
     : `${results.length} result${results.length === 1 ? "" : "s"}`;
 
   const status = () => {
+    if (vpnDown) {
+      return (
+        <Text color={COLOR.warn}>
+          {`${vpn.name} is ${vpn.detail}. Searches and downloads are paused until it is back.`}
+        </Text>
+      );
+    }
     if (pending) {
       // Rows are already usable: the settled header simply carries a spinner
       // until the tab's last source lands.

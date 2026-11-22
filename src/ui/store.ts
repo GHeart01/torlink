@@ -29,6 +29,19 @@ export type SeedFocus = "seeding" | "paused" | "missing" | "idle";
 
 export type ResultFocus = "list" | "detail";
 
+/**
+ * The VPN torlink is holding itself to (Cloudflare WARP), or null when none
+ * is in play. While `up` is false nothing is searched or transferred.
+ */
+export interface VpnStatus {
+  name: string;
+  up: boolean;
+  /** Short and lower-case: "on", "off", "connecting". */
+  detail: string;
+  /** Ask the VPN to come back up. */
+  connect: () => void;
+}
+
 export interface DownloadInput {
   id: string;
   name: string;
@@ -74,6 +87,8 @@ export interface Store {
   // Fetches the .torrent metadata for a search result (via magnet if not yet
   // cached) and exports it to the configured download folder.
   fetchAndExportTorrent: (input: { id: string; name: string; magnet: string }) => void;
+
+  vpn: VpnStatus | null;
 
   notice: string | null;
   setNotice: (s: string | null) => void;

@@ -49,10 +49,16 @@ function idleState(): ConcurrentSearchState {
 // leading-throttle the queue hooks in store.ts use for `update` events.
 const RESULT_FLUSH_MS = 150;
 
-export function useConcurrentSearch(query: string): ConcurrentSearchState {
+// `enabled` is false while the VPN torlink is held to is down: nothing is
+// looked up or fetched then, and the search runs afresh once it is back.
+export function useConcurrentSearch(query: string, enabled = true): ConcurrentSearchState {
   const [state, setState] = useState<ConcurrentSearchState>(idleState);
 
   useEffect(() => {
+    if (!enabled) {
+      setState(idleState());
+      return;
+    }
     const ctrl = new AbortController();
     let alive = true;
     const collected: TorrentResult[] = [];
@@ -124,7 +130,7 @@ export function useConcurrentSearch(query: string): ConcurrentSearchState {
       ctrl.abort();
       if (timer) clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, enabled]);
 
   return state;
 }

@@ -16,7 +16,7 @@ export function Splash({
   updateVersion,
   recovered,
 }: { updateVersion?: string | null; recovered?: boolean } = {}) {
-  const { submitQuery, quitAll, cols, rows } = useStore();
+  const { submitQuery, quitAll, cols, rows, vpn } = useStore();
   const { isRawModeSupported } = useStdin();
   const { press } = useMouse();
 
@@ -81,6 +81,18 @@ export function Splash({
           <Text dimColor> quit</Text>
         </Clickable>
       </Box>
+      {vpn ? (
+        <Clickable marginTop={1} onClick={vpn.up ? undefined : vpn.connect}>
+          {vpn.up ? (
+            <Text dimColor>
+              <Text color={COLOR.good}>{`${ICON.done} `}</Text>
+              {`${vpn.name} on ${ICON.dot} traffic and DNS go through it`}
+            </Text>
+          ) : (
+            <Text color={COLOR.warn}>{`${ICON.warn} ${vpn.name} ${vpn.detail} ${ICON.dot} paused until it is back`}</Text>
+          )}
+        </Clickable>
+      ) : null}
     </Box>
   );
 }

@@ -40,6 +40,14 @@ Downloads run in the background while you keep searching, so you can queue up as
 
 When a download comes with several videos or tracks, torlink drops a `playlist.m3u` into each folder holding more than one, so a course split into modules plays straight through in order. Run `torlnk --no-playlist` if you'd rather it didn't.
 
+## Cloudflare WARP
+
+If [Cloudflare WARP](https://one.one.one.one) is installed, torlink uses it without being asked. On launch it turns WARP on in traffic + DNS over HTTPS mode if it isn't already, then binds every peer, tracker, DHT and search connection to WARP's tunnel. Whenever WARP isn't the thing carrying your traffic, torlink stops: searches aren't sent, downloads and seeds pause, and the top of the screen says so. Nothing falls back to your normal connection, and everything picks up on its own when WARP is back. Clicking the "WARP off" line asks it to reconnect.
+
+A few things worth knowing. Turning WARP on, or changing its mode, affects your whole machine, not just torlink. WARP has no port forwarding, so other peers can't connect in to you; downloads are fine, seeding is weaker. Bound to a tunnel, torlink also leaves WebRTC peers, local peer discovery and port mapping off, and uses IPv4 only. And WARP hides your address from peers but isn't an anonymity service.
+
+Run `torlnk --no-warp` (or set `TORLINK_NO_WARP=1`) to use your normal connection instead. Naming an interface yourself with `--interface` also switches this off, and without WARP installed nothing changes. The headless modes below never bring WARP in; they keep `--interface`.
+
 ## What it searches
 
 A short, hand-picked list of trusted sources:

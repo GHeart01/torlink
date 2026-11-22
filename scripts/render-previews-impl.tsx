@@ -104,6 +104,7 @@ function makeStore(
     openDownloadFolder: noop,
     exportTorrent: noop,
     fetchAndExportTorrent: noop,
+    vpn: null,
     notice: null,
     setNotice: noop,
     quitAll: noop,

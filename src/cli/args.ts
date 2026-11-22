@@ -13,6 +13,9 @@ export type CliCommand =
       initialMagnet?: string;
       initialTorrent?: string;
       playlist?: boolean;
+      // False for --no-warp: run on the normal connection even though
+      // Cloudflare WARP is installed.
+      warp?: boolean;
       network?: NetworkOptions;
     }
   | {
@@ -101,7 +104,16 @@ function seedTimeFrom(raw: string | undefined): number | undefined {
 export function parseCliArgs(argv: string[]): CliCommand {
   const taken = takeNetworkFlags(argv);
   if (taken.error !== undefined) return { kind: "invalid", arg: taken.error };
-  return withNetwork(withPlaylist(taken.rest), taken.network);
+  return withNetwork(withWarp(taken.rest), taken.network);
+}
+
+// WARP is brought in by the TUI alone; the headless modes keep --interface.
+function withWarp(argv: string[]): CliCommand {
+  const noWarp = argv.includes("--no-warp");
+  const cmd = withPlaylist(argv.filter((arg) => arg !== "--no-warp"));
+  if (!noWarp || cmd.kind === "invalid" || cmd.kind === "help" || cmd.kind === "version") return cmd;
+  if (cmd.kind === "run") return { ...cmd, warp: false };
+  return { kind: "invalid", arg: "--no-warp (use with the TUI)" };
 }
 
 function withPlaylist(argv: string[]): CliCommand {
@@ -330,6 +342,14 @@ seeding for good.
 
 --daemon (watch/serve/files): background the process (own session, logs to a
 file), so you can log out and it keeps running. Prints the pid and log path.
+
+Cloudflare WARP (TUI): when WARP is installed, torlink turns it on in traffic +
+DNS over HTTPS mode, binds every peer, tracker, DHT and search socket to its
+tunnel, and pauses whenever WARP is not carrying traffic, resuming on its own
+when it is back. Turning WARP on affects the whole machine, not just torlink.
+Without WARP installed nothing changes. Pass --no-warp (or set
+TORLINK_NO_WARP=1) to run on the normal connection; --interface also turns
+this off, since you have named the interface yourself.
 
 network (TUI/watch/serve/seed; search takes --interface alone):
   --interface <name|ip>  bind every peer, tracker, DHT and search socket to one

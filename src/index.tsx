@@ -7,6 +7,7 @@ import { daemonize } from "./daemon/daemonize";
 import { runAttach } from "./daemon/attach";
 import { containUnhandledRejections, logCrash } from "./util/crashlog";
 import { armInterface, exportNetworkEnv } from "./download/network";
+import { WARP_WAITING, defaultWarpDeps, readWarp, warpWanted, type WarpState } from "./util/warp";
 import { bindAddress, interfaceNames } from "./util/bind";
 import { VERSION } from "./version";
 import { App } from "./ui/App";
@@ -155,6 +156,20 @@ if (inbox === "sent") {
   process.exit(0);
 }
 
+// Cloudflare WARP, when it is installed and the user has not named an
+// interface or opted out: read it now and build everything bound to its
+// tunnel, or closed if it is not carrying traffic yet. This has to land before
+// the first socket, for the same reason the --interface bind does (#164); the
+// app turns WARP on and follows it from there (ui/hooks/useWarp.ts).
+let warp: WarpState | null = null;
+if (warpWanted(cmd)) {
+  warp = await readWarp(defaultWarpDeps()).catch(() => null);
+  if (warp && warp.kind !== "missing") {
+    process.env.TORLINK_INTERFACE = warp.kind === "on" ? warp.address : WARP_WAITING;
+    armInterface(process.env.TORLINK_INTERFACE);
+  }
+}
+
 // Enter the alt-screen and hide the hardware cursor: the TUI draws its own
 // cursor (the search field block, list pointers), so the terminal's should
 // stay hidden. restoreTerminal shows it again on exit. The cursor is homed
@@ -195,6 +210,7 @@ const app = render(
     initialTorrent={cmd.initialTorrent}
     inbox={inbox}
     playlist={cmd.playlist}
+    warp={warp}
     onQuit={() => forceExit(0)}
   />,
   { exitOnCtrlC: false },
