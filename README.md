@@ -42,7 +42,7 @@ When a download comes with several videos or tracks, torlink drops a `playlist.m
 
 ## Cloudflare WARP
 
-If [Cloudflare WARP](https://one.one.one.one) is installed, torlink uses it without being asked. On launch it turns WARP on in traffic + DNS over HTTPS mode if it isn't already, then binds every peer, tracker, DHT and search connection to WARP's tunnel. Whenever WARP isn't the thing carrying your traffic, torlink stops: searches aren't sent, downloads and seeds pause, and the top of the screen says so. Nothing falls back to your normal connection, and everything picks up on its own when WARP is back. Clicking the "WARP off" line asks it to reconnect.
+If [Cloudflare WARP](https://one.one.one.one) is installed, torlink uses it without being asked. On launch it turns WARP on in traffic + DNS over HTTPS mode if it isn't already, then binds every peer, tracker, DHT and search connection to WARP's tunnel. Whenever WARP isn't the thing carrying your traffic, torlink stops: searches aren't sent, downloads and seeds pause, and the top of the screen says so. It never switches over to your normal connection, and everything picks up on its own when WARP is back. WARP is checked every three seconds, so a drop is acted on within that time, or at once if the tunnel's address goes away with it. Clicking the "WARP off" line asks it to reconnect.
 
 A few things worth knowing. Turning WARP on, or changing its mode, affects your whole machine, not just torlink. WARP has no port forwarding, so other peers can't connect in to you; downloads are fine, seeding is weaker. Bound to a tunnel, torlink also leaves WebRTC peers, local peer discovery and port mapping off, and uses IPv4 only. And WARP hides your address from peers but isn't an anonymity service.
 

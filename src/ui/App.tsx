@@ -84,14 +84,18 @@ interface AppProps {
 // says what that costs, and a click asks the VPN to come back.
 function VpnBadge({ vpn }: { vpn: NonNullable<Store["vpn"]> }) {
   return (
-    <Clickable onClick={vpn.up ? undefined : vpn.connect} flexShrink={0}>
+    <Clickable onClick={vpn.up ? undefined : vpn.connect}>
+      {/* One row, always: on a narrow terminal it shortens rather than
+          wrapping under the wordmark. */}
       {vpn.up ? (
-        <Text dimColor>
+        <Text dimColor wrap="truncate-end">
           <Text color={COLOR.good}>{`${ICON.done} `}</Text>
           {`${vpn.name} on`}
         </Text>
       ) : (
-        <Text color={COLOR.warn}>{`${ICON.warn} ${vpn.name} ${vpn.detail} ${ICON.dot} paused`}</Text>
+        <Text color={COLOR.warn} wrap="truncate-end">
+          {`${ICON.warn} ${vpn.name} ${vpn.detail} ${ICON.dot} paused`}
+        </Text>
       )}
     </Clickable>
   );
